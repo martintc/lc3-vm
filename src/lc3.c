@@ -3,6 +3,10 @@
 
 #define UNIT16_MAX 65536
 
+#define boolean int
+#define TRUE 1
+#define FALSE 0
+
 // total memory availiable to the virtual system
 uint16_t memory[UNIT16_MAX];
 
@@ -59,6 +63,11 @@ int main(int argc, char* argv[]) {
     PC_START = 0x3000
   };
   reg[R_PC] = PC_START; // set program counter to starting position
+
+  boolean run = TRUE;
+  while (run) {
+    
+  }
 
 
 }
