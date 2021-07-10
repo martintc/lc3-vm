@@ -44,6 +44,13 @@ enum {
   OP_TRAP // execute trap
 };
 
+// condition flags
+enum {
+  FL_POS = 1 << 0, // positive
+  FL_ZRO = 1 << 0, // zero
+  FL_NEG = 1 << 2, // negative
+};
+
 int main(int argc, char* argv[]) {
   
 }
