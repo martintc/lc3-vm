@@ -52,5 +52,13 @@ enum {
 };
 
 int main(int argc, char* argv[]) {
-  
+
+  // set the starting position
+  // 0x3000 is the default
+  enum {
+    PC_START = 0x3000
+  };
+  reg[R_PC] = PC_START; // set program counter to starting position
+
+
 }
