@@ -66,6 +66,12 @@ enum {
   FL_NEG = 1 << 2, // negative
 };
 
+// change little endian to big endian
+// lc3 was designed as a big endian system
+uint16_t swap16(uint16_t x) {
+  return (x << 8) | (x >> 8);
+}
+
 // read program into memory
 void read_image_file(FILE* file) {
   uint16_t origin;
