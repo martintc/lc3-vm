@@ -64,6 +64,17 @@ enum {
   FL_NEG = 1 << 2, // negative
 };
 
+// setting the condition register using the condition flags
+void update_flags(uint16_t r) {
+  if(reg[r] == 0) {
+    reg[R_COND] = FL_ZRO;
+  } else if(reg[r] >> 15) { // 1 in left most bit shows negative
+    reg[R_COND] = FL_NEG;
+  } else {
+    reg[R_COND] = FL_POS;
+  }
+}
+
 int main(int argc, char* argv[]) {
 
   // command line
