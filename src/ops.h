@@ -1,4 +1,4 @@
-#ifndefine OP_H
+#ifndef OP_H
 #define OP_H
 
 #include <stdio.h>
