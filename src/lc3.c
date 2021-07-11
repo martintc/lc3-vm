@@ -77,6 +77,7 @@ void update_flags(uint16_t r) {
   }
 }
 
+// add opcode
 void add_op(uint16_t instr) {
   // dest register (DR)
   uint16_t r0 = (instr >> 0) & 0x7;
