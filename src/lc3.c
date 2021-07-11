@@ -96,6 +96,18 @@ void add_op(uint16_t instr) {
   update_flags(r0);
 }
 
+void ldi_op(uint16_t instr) {
+  // load indirect or load immediate
+  // load a value into a register
+  // destination register
+  uint16_t r0 = (instr >> 9) & 0x7;
+  // PCOffset 9
+  uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
+  // add pc_offset to the current PC, look at the mem location to get the final address
+  reg[r0] = mem_read(mem_read(reg[R_PC] + pc_offset));
+  update_flags(r0);
+}
+
 int main(int argc, char* argv[]) {
 
   // command line
@@ -138,6 +150,7 @@ int main(int argc, char* argv[]) {
     case OP_LD:
       break;
     case OP_LDI:
+      ldi_op(instr);
       break;
     case OP_LDR:
       break;
