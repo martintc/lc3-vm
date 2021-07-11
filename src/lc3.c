@@ -10,6 +10,8 @@
 #include <sys/termios.h>
 #include <sys/mman.h>
 
+#include "lc3_util.h"
+
 #define UNIT16_MAX 65536
 
 #define boolean int
@@ -75,6 +77,24 @@ void update_flags(uint16_t r) {
   }
 }
 
+void add_op(uint16_t instr) {
+  // dest register (DR)
+  uint16_t r0 = (instr >> 0) & 0x7;
+  // first operand which is a register
+  uint16_t r1 = (instr >> 6) & 0x7;
+  // check if we are in immediate mode
+  uint16_t imm_flag = (instr >> 5) & 0x1;
+
+  if(imm_flag) {
+    uint16_t imm5 = sign_extend(instr & 0x1F, 5);
+    reg[r0] = reg[r1] + imm5;
+  } else { // adding two registers
+    uint16_t r2 = instr & 0x7;
+    reg[r0] = reg[r1] + reg[r2];
+  }
+  update_flags(r0);
+}
+
 int main(int argc, char* argv[]) {
 
   // command line
@@ -102,6 +122,7 @@ int main(int argc, char* argv[]) {
 
     switch (op) {
     case OP_ADD:
+      add_op(instr); // function for add operation
       break;
     case OP_AND:
       break;
@@ -135,6 +156,4 @@ int main(int argc, char* argv[]) {
       break;
     }
   }
-
-
 }
