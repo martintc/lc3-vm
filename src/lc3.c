@@ -66,6 +66,11 @@ enum {
   FL_NEG = 1 << 2, // negative
 };
 
+enum {
+  MR_KBSR = 0xFE00, // keyboard status
+  MR_KBDR = 0xFE02 // keyboard data
+};
+
 // change little endian to big endian
 // lc3 was designed as a big endian system
 uint16_t swap16(uint16_t x) {
@@ -110,6 +115,35 @@ void update_flags(uint16_t r) {
   }
 }
 
+// checking for keyboard press
+uint16_t check_key() {
+  fd_set readfds;
+  FD_ZERO(&readfds);
+  FD_SET(STDIN_FILENO, &readfds);
+
+  struct timeval timeout;
+  timeout.tv_sec = 0;
+  timeout.tv_usec = 0;
+  return select(1, &readfds, NULL, NULL &timeout) != 0;
+}
+
+// write a value to an address in memory
+void mem_write(uint16_t address, uint16_t val) {
+  memory[address] = val;
+}
+
+uint16_t mem_read(uint16_t address) {
+  if (address == MR_KBSR) {
+    if (check_key()) { // for keyboard data
+      memory[MR_KBSR] = (1 << 15);
+      memory[MR_KBDR] = getchar();
+    } else {
+      memory[MR_KBSR] = 0;
+    }
+  }
+  return memory[address];
+}
+
 // add opcode
 void add_op(uint16_t instr) {
   // dest register (DR)
@@ -139,6 +173,60 @@ void ldi_op(uint16_t instr) {
   // add pc_offset to the current PC, look at the mem location to get the final address
   reg[r0] = mem_read(mem_read(reg[R_PC] + pc_offset));
   update_flags(r0);
+}
+
+// and operation
+void and_op(uint16_t instr) {
+  uint16_t r0 = (instr >> 9) & 0x7;
+  uint16_t r1 = (instr >> 6) & 0x7;
+  uint16_t imm_flag = (instr >> 5) & 0x1;
+
+  if (imm_flag) { // if immediate value is used
+    uint16_t imm5 = sign_extend(instr & 0x1F, 5);
+    reg[r0] = reg[r1] & imm5;
+  } else { // if the two operands are registers
+    uint16_t r2 = instr & 0x7;
+    reg[r0] = reg[r1] & reg[r2];
+  }
+  update_flags(r0);
+}
+
+// not operation
+void not_op(uint16_t instr) {
+  uint16_t r0 = (instr >> 9) & 0x7;
+  uint16_t r1 = (instr >> 6) & 0x7;
+
+  reg[r0] = ~reg[r1]; // invert the buts in r1
+  update_flags(r0);
+}
+
+// branch operation
+void branch_op(uint16_t instr) {
+  uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
+  uint16_t cond_flag = (instr >> 9) & 0x7;
+  if (cond_flag & reg[R_COND]) {
+    reg[R_PC] += pc_offset;
+  }
+}
+
+// JUMP operation
+void jump_op(uint16_t instr) {
+  uint16_t r1 = (instr >> 6) & 0x7;
+  reg[R_PC] = reg[r1];
+}
+
+// jump register operation
+void jr_op(uint16_t instr) {
+  uint16_t long_flag = (instr >> 11) & 1;
+  reg[R_R7] = reg[R_PC];
+  if (long_flag) {
+    uint16_t long_pc_offset = sign_extend(instr & 0x7FF, 11);
+    reg[R_PC] += long_pc_offset;
+  } else {
+    uint16_t r1 = (instr >> 6) &0x7;
+    reg[R_PC] = reg[r1]; // JSR
+  }
+  /* break; // no-op? */
 }
 
 int main(int argc, char* argv[]) {
@@ -171,14 +259,19 @@ int main(int argc, char* argv[]) {
       add_op(instr); // function for add operation
       break;
     case OP_AND:
+      and_op(instr);
       break;
     case OP_NOT:
+      not_op(instr);
       break;
     case OP_BR:
+      branch_op(instr);
       break;
     case OP_JMP:
+      jump_op(instr);
       break;
     case OP_JSR:
+      jr_op(instr);
       break;
     case OP_LD:
       break;
